@@ -1,36 +1,24 @@
 # AI DevOps Cloud Prompts
 
-![License](https://img.shields.io/badge/license-Apache%202.0-blue)
-![Status](https://img.shields.io/badge/status-active-brightgreen)
+A **canonical, versioned library** of high‑quality AI prompts for DevOps, Cloud (AWS, Azure, GCP, Oracle Cloud), FinOps, SRE, Security, and Platform Engineering.
 
-A **canonical, versioned library** of high‑quality AI prompts for **DevOps, Cloud (AWS, Azure, GCP, Oracle Cloud), FinOps, SRE, Security, and Platform Engineering**. Designed to help engineers and prompt builders accelerate infrastructure automation, troubleshooting, cost optimisation, and secure operations using large language models.
-
-## Why this repository?
-
-- **Battle‑tested prompts** – ready to copy into your LLM chat or integration.
-- **Metadata‑rich** – every prompt includes variables, difficulty, tags, provider, sample I/O, and a JSON Schema for output validation.
-- **Provider‑agnostic with cloud‑specific variants** – covers AWS, Azure, GCP, and Oracle Cloud.
-- **Maturity labels** – draft → reviewed → production, governed by a review process.
-- **Tooling included** – test harness validates output shape, CI lints front matter and builds a static catalog.
+Designed to accelerate infrastructure automation, troubleshooting, cost optimisation, and secure operations using large language models. Each prompt includes metadata, variables, sample I/O, and a JSON Schema so you can validate LLM outputs automatically.
 
 ## Quickstart
 
 ```bash
-git clone https://github.com/Indra1806/ai-devops-cloud-prompts.git
+git clone https://github.com/your-org/ai-devops-cloud-prompts.git
 cd ai-devops-cloud-prompts
+
+# Install test harness dependencies
+pip install -r tools/test_harness/requirements.txt
 
 # Validate a single prompt
 python tools/test_harness/runner.py --prompt prompts/k8s/pod_disruption_budget.md
 
-# Run the full test suite
+# Validate all prompts
 python tools/test_harness/runner.py --dir prompts/
 ```
-
-Browse prompts by category:
-- `prompts/providers/aws/`
-- `prompts/k8s/`
-- `prompts/finops/`
-- ...
 
 ## Repository structure
 
@@ -47,18 +35,17 @@ Browse prompts by category:
 │   ├── sre/
 │   ├── migration/
 │   ├── automation/
-│   └── templates/         # Prompt template & metadata schema
+│   └── templates/         # Canonical prompt template & metadata schema
 ├── examples/
-│   └── seed_prompts.md    # 20 fully‑fleshed sample prompts
+│   └── seed_prompts.md    # 30 fully‑fleshed prompt examples
 ├── tools/
 │   └── test_harness/runner.py
 ├── docs/
 │   ├── prompt_engineering.md
-│   ├── usage.md
-│   └── style_guide.md
+│   └── usage.md
 ├── .github/
 │   ├── workflows/ci.yml
-│   ├── ISSUE_TEMPLATE/
+│   ├── ISSUE_TEMPLATE.md
 │   └── PULL_REQUEST_TEMPLATE.md
 ├── README.md
 ├── CONTRIBUTING.md
@@ -71,19 +58,17 @@ Browse prompts by category:
 
 ```yaml
 ---
-title: "Generate least-privilege IAM policy for an S3 bucket"
+title: "Generate least‑privilege IAM policy for an S3 bucket"
 id: aws-iam-least-privilege-s3
 intent: "Create a secure IAM policy that grants minimal required permissions."
 difficulty: intermediate
 provider: aws
 variables:
-  - name: bucket_name
+  bucket_name:
     type: string
-    description: "Name of the S3 bucket"
-    example: "my-app-data"
-  - name: actions
+    example: my-app-data
+  actions:
     type: list
-    description: "Allowed S3 actions (e.g. GetObject, PutObject)"
     example: ["s3:GetObject", "s3:PutObject"]
 expected_output_schema:
   type: object
@@ -93,15 +78,30 @@ expected_output_schema:
     policy_json:
       type: object
   required: ["policy_name", "policy_json"]
+sample_input:
+  bucket_name: my-app-data
+  actions: ["s3:GetObject", "s3:PutObject"]
+sample_output:
+  policy_name: s3-least-privilege-my-app-data
+  policy_json:
+    Version: "2012-10-17"
+    Statement:
+      - Effect: "Allow"
+        Action: ["s3:GetObject", "s3:PutObject"]
+        Resource: "arn:aws:s3:::my-app-data/*"
+rationale: "Use when granting access to S3 objects. Prefer least‑privilege to avoid data leaks."
 ---
 ```
 
-The prompt body gives the LLM clear instructions to produce valid JSON matching the schema.
+The prompt body tells the LLM to produce valid JSON matching the schema.
 
-## Contributing
+## Adding your own prompts
 
-We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the prompt style guide, review checklist, and maturity model.
+1. Copy `templates/prompt_template.md` to the appropriate category folder.
+2. Fill in the YAML front matter and prompt body with `{{variable}}` placeholders.
+3. Run the test harness to validate.
+4. Open a pull request following `CONTRIBUTING.md`.
 
 ## License
 
-Apache 2.0 – see [LICENSE](LICENSE).
+Apache 2.0 – see `LICENSE`.

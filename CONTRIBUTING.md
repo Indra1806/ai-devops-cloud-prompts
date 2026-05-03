@@ -1,48 +1,47 @@
 # Contributing to AI DevOps Cloud Prompts
 
-Thank you for helping build a high‑quality prompt library! This document outlines the workflow, style guide, and review process.
+Thanks for helping build a high‑quality prompt library!
 
 ## Prompt Style Guide
 
-- Every prompt lives in a **single Markdown file** with YAML front matter.
-- The front matter must include all required fields (see template below).
+- Every prompt is a **single Markdown file** with YAML front matter.
+- Front matter must include all required fields described in `templates/prompt_template.md`.
 - Prompt body should contain:
   1. **System instruction** (optional but recommended).
-  2. **User instruction** with placeholders `{{variable_name}}`.
-  3. **Output format constraints** (JSON, YAML, code block).
+  2. **User instruction** with `{{variable}}` placeholders.
+  3. **Output format constraints** (JSON, YAML, or code block).
   4. **Validation hints** – what the LLM must check.
 
-### Required front matter fields
+## Required Front Matter Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `title` | string | Short, action‑oriented title |
-| `id` | string | Unique slug (e.g. `aws-iam-least-privilege-s3`) |
+| `id` | string | Unique slug (e.g., `aws-iam-least-privilege-s3`) |
 | `intent` | string | One‑line description of the prompt’s purpose |
 | `difficulty` | enum | `beginner`, `intermediate`, `advanced`, `professional`, `optimalistic`, `cost-efficient` |
-| `tags` | list of strings | Keywords helping search (max 6) |
-| `provider` | string | `aws`, `azure`, `gcp`, `oracle`, or `agnostic` |
-| `variables` | list of objects | Each with `name`, `type`, `description`, `example` |
-| `expected_output_schema` | object | A valid JSON Schema describing the expected LLM output |
-| `sample_input` | object | Key‑value pairs filled with example variable values |
-| `sample_output` | object | An example output that conforms to the schema |
+| `tags` | array of strings | Keywords (max 6) |
+| `provider` | string | `aws`, `azure`, `gcp`, `oracle`, `multi`, `general` |
+| `variables` | map | Variable name → `{type, example}` |
+| `expected_output_schema` | object | Valid JSON Schema for output |
+| `sample_input` | object | Example values for variables |
+| `sample_output` | object | Example output matching schema |
+| `rationale` | string | When to use the prompt and common pitfalls |
 
 ## Review Checklist
 
-Before submitting a pull request:
-
-- [ ] Prompt follows the template from `prompts/templates/prompt_template.md`.
+- [ ] Prompt follows the template and style guide.
 - [ ] YAML front matter is valid and all required fields present.
-- [ ] Variables are used in the prompt body with `{{name}}` placeholders.
-- [ ] `expected_output_schema` is a valid JSON Schema (validate with `jsonschema`).
-- [ ] `sample_output` validates against the schema.
-- [ ] No secrets, credentials, or proprietary information.
+- [ ] `{{variable}}` placeholders match the `variables` map.
+- [ ] `expected_output_schema` is a valid JSON Schema (check with `jsonschema`).
+- [ ] `sample_output` passes validation against the schema.
+- [ ] No secrets or credentials appear (CI will scan).
 - [ ] Difficulty and tags are appropriate.
-- [ ] Prompt has been tested with at least one LLM (note the model in a comment).
+- [ ] Prompt has been tested with at least one LLM (note model in a comment).
 
 ## Maturity Labels
 
-Every prompt carries a maturity label in a comment at the bottom of the front matter:
+Add a comment in the front matter:
 
 ```yaml
 # maturity: draft | reviewed | production
@@ -52,26 +51,13 @@ Every prompt carries a maturity label in a comment at the bottom of the front ma
 - **reviewed** – Peer‑reviewed by at least one other contributor.
 - **production** – Approved by two maintainers, ready for broad use.
 
-Upgrading from `reviewed` to `production` requires **two approvals** and passing the automated schema validation.
-
-## Adding a New Prompt
-
-1. Create a new `.md` file in the appropriate category folder.
-2. Copy the canonical template from `prompts/templates/prompt_template.md`.
-3. Fill in front matter and prompt body.
-4. Run the test harness locally:
-   ```bash
-   python tools/test_harness/runner.py --prompt your-file.md
-   ```
-5. Submit a pull request. The CI will lint and validate automatically.
+Upgrading from `reviewed` to `production` requires **two approvals**.
 
 ## Pull Request Process
 
-- Branch from `main` with a descriptive name.
-- Add a changelog entry in `CHANGELOG.md`.
-- Ensure all checks pass (GitHub Actions).
-- Request review from a maintainer.
-
-## Code of Conduct
-
-This project adheres to the [Contributor Covenant](CODE_OF_CONDUCT.md).
+1. Branch from `main` with a descriptive name.
+2. Add or modify prompts, following the checklist.
+3. Run `python tools/test_harness/runner.py --dir prompts/` locally.
+4. Open a PR using the pull request template.
+5. CI must pass (linting, validation, secrets check).
+6. Obtain approvals as per maturity rules.

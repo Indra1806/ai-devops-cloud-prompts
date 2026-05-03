@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   lint-and-test:
@@ -19,42 +19,46 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pyyaml jsonschema markdown
+          python -m pip install --upgrade pip
+          pip install -r tools/test_harness/requirements.txt
+          pip install markdown
 
-      - name: Lint YAML front matter and Markdown structure
+      - name: Lint YAML front matter (required fields)
         run: |
-          python -c "
-          import glob, yaml, sys, os
+          import glob, yaml, sys
           errors = []
           for f in glob.glob('prompts/**/*.md', recursive=True):
-              with open(f) as fh:
+              with open(f, encoding='utf-8') as fh:
                   content = fh.read()
               if not content.startswith('---'):
                   errors.append(f'{f}: missing YAML front matter')
                   continue
               parts = content.split('---', 2)
               if len(parts) < 3:
-                  errors.append(f'{f}: invalid front matter delimiter')
+                  errors.append(f'{f}: invalid delimiter')
                   continue
               try:
-                  meta = yaml.safe_load(parts[1])
-                  required = ['id', 'title', 'intent', 'difficulty', 'provider', 'expected_output_schema', 'sample_output']
+                  fm = yaml.safe_load(parts[1])
+                  required = ['id', 'title', 'intent', 'difficulty', 'provider', 'expected_output_schema', 'sample_input', 'sample_output']
                   for key in required:
-                      if key not in meta:
+                      if key not in fm:
                           errors.append(f'{f}: missing key {key}')
               except yaml.YAMLError as e:
-                  errors.append(f'{f}: YAML parse error: {e}')
+                  errors.append(f'{f}: YAML error {e}')
           if errors:
               for e in errors:
                   print(e)
               sys.exit(1)
-          else:
-              print('All prompts passed front matter lint.')
-          "
+          print('All prompts passed front matter lint.')
+        shell: python
+
+      - name: Secret detection
+        run: |
+          grep -rE 'AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z\-_]{35}|password\s*=\s*[^\s]+|secret\s*=\s*[^\s]+' prompts/ && echo 'Secrets found!' && exit 1 || echo 'No secrets detected.'
+        shell: bash
 
       - name: Run test harness
-        run: |
-          python tools/test_harness/runner.py --dir prompts/
+        run: python tools/test_harness/runner.py --dir prompts/
 
       - name: Build static HTML catalog
         run: |
@@ -62,14 +66,16 @@ jobs:
           python -c "
           import markdown, glob, os
           for md_file in glob.glob('prompts/**/*.md', recursive=True):
-              with open(md_file) as fh:
-                  html = markdown.markdown(fh.read(), extensions=['fenced_code', 'tables'])
+              with open(md_file, encoding='utf-8') as fh:
+                  body = fh.read()
+              # Exclude YAML for rendering (optional: keep it hidden)
+              html = markdown.markdown(body, extensions=['fenced_code', 'tables'])
               rel = os.path.relpath(md_file, 'prompts')
-              out_path = os.path.join('catalog', rel.replace('.md', '.html'))
-              os.makedirs(os.path.dirname(out_path), exist_ok=True)
-              with open(out_path, 'w') as out:
-                  out.write(f'<html><head><meta charset=\"utf-8\"><title>Prompt Catalog</title></head><body>{html}</body></html>')
-          print('Catalog built in catalog/')
+              out = os.path.join('catalog', rel.replace('.md', '.html'))
+              os.makedirs(os.path.dirname(out), exist_ok=True)
+              with open(out, 'w', encoding='utf-8') as f:
+                  f.write(f'<html><head><meta charset=\"utf-8\"><title>{os.path.basename(md_file)}</title></head><body>{html}</body></html>')
+          print('Catalog built.')
           "
 
       - name: Upload catalog artifact

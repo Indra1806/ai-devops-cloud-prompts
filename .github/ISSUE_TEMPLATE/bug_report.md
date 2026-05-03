@@ -1,22 +1,28 @@
 ---
-name: Bug report
-about: Report an issue with a prompt or tooling
-title: '[BUG] '
+name: Bug Report
+about: Report a problem with a prompt
+title: "[BUG] "
 labels: bug
 assignees: ''
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+## Description
+Clear description of the issue.
 
-**Prompt file or tool**
-Path to the prompt or script (e.g., `prompts/k8s/pod_disruption_budget.md`).
+## Affected Prompt
+- ID: (e.g., aws-vpc-design-001)
+- File: (path)
 
-**Expected behavior**
-What you expected to happen.
+## Steps to Reproduce
+1.
+2.
+3.
 
-**LLM & settings (if applicable)**
-Model name, temperature, max tokens, etc.
+## Expected Behavior
 
-**Additional context**
-Add any other context about the problem here.
+## Actual Behavior
+
+## Environment
+- Python version: 
+- Test harness version: 
+- OS: 
